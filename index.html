@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smoothie Fraction Lab</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#1a103c',
+                            800: '#2b1b54',
+                            700: '#3f2878'
+                        },
+                        strawberry: '#fb7185', // rose-400
+                        blueberry: '#818cf8',  // indigo-400
+                        mango: '#fbbf24',      // amber-400
+                    },
+                    animation: {
+                        'wiggle': 'wiggle 0.5s ease-in-out infinite',
+                        'glow': 'glow 1.5s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        glow: {
+                            'from': { boxShadow: '0 0 10px #fbbf24, 0 0 20px #fbbf24' },
+                            'to': { boxShadow: '0 0 20px #fcd34d, 0 0 30px #fcd34d' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styling for Magic Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #fbbf24;
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+            border: 3px solid #fff;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-space-900 via-space-800 to-space-700 min-h-screen text-white flex flex-col font-sans overflow-x-hidden">
+    
+    <!-- Header / Top Section -->
+    <header class="w-full p-4 md:p-6 flex flex-col items-center justify-center relative z-10">
+        <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-strawberry via-purple-300 to-blueberry drop-shadow-lg mb-4 text-center">
+            🚀 Smoothie Fraction Lab
+        </h1>
+        
+        <!-- Mission Board -->
+        <div class="glass-panel rounded-2xl p-4 w-full max-w-3xl flex flex-col items-center justify-center shadow-2xl relative">
+            <!-- Mascot/Hint Icon -->
+            <div id="mascot" class="absolute -top-8 -left-4 md:-left-12 bg-mango text-space-900 font-bold px-4 py-2 rounded-full rounded-bl-none shadow-lg transform transition-all duration-300 opacity-0 scale-90">
+                💬 <span id="hint-text">ทำส่วนให้เท่ากันก่อนนะ!</span>
+            </div>
+
+            <h2 id="order-title" class="text-mango font-bold text-lg mb-2">👽 ออเดอร์ที่ 1 จากเอเลี่ยน:</h2>
+            <div class="flex items-center gap-4 text-xl md:text-3xl font-semibold">
+                <span id="order-fruit1" class="text-strawberry">สตรอว์เบอร์รี 1/2</span>
+                <span class="text-gray-300">+</span>
+                <span id="order-fruit2" class="text-blueberry">บลูเบอร์รี 1/3</span>
+            </div>
+            
+            <!-- Abstract Equation Board -->
+            <div class="mt-4 bg-space-900/50 rounded-xl p-3 w-full flex justify-center items-center gap-2 md:gap-4 text-2xl md:text-4xl border border-white/10">
+                <!-- Fraction 1 -->
+                <div class="flex flex-col items-center text-strawberry">
+                    <span id="eq-num1">1</span>
+                    <hr class="w-10 border-t-2 border-strawberry my-1">
+                    <span id="eq-den1">2</span>
+                </div>
+                <span class="text-white">+</span>
+                <!-- Fraction 2 -->
+                <div class="flex flex-col items-center text-blueberry">
+                    <span id="eq-num2">1</span>
+                    <hr class="w-10 border-t-2 border-blueberry my-1">
+                    <span id="eq-den2">3</span>
+                </div>
+                <span class="text-white">=</span>
+                <!-- Result (Hidden initially) -->
+                <div id="eq-result" class="flex flex-col items-center text-mango opacity-30 transition-opacity duration-500">
+                    <span id="eq-num-res">?</span>
+                    <hr class="w-10 border-t-2 border-mango my-1">
+                    <span id="eq-den-res">?</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Lab Area (Middle Section) -->
+    <main class="flex-1 w-full max-w-6xl mx-auto p-4 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 relative z-10">
+        
+        <!-- Cup 1: Strawberry -->
+        <div class="flex flex-col items-center gap-4 w-full md:w-1/3">
+            <div class="glass-panel p-4 rounded-3xl flex flex-col items-center relative">
+                <div class="absolute -top-4 bg-strawberry text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                    สตรอว์เบอร์รี
+                </div>
+                <!-- Canvas for Cup 1 -->
+                <canvas id="cup1-canvas" width="160" height="240" class="mt-2"></canvas>
+            </div>
+            <!-- Magic Slider 1 -->
+            <div class="w-full max-w-[200px] bg-space-800/80 p-3 rounded-xl border border-white/10 text-center">
+                <label class="block text-sm text-gray-300 mb-1">✨ Magic Slider (x<span id="mult1-display">1</span>)</label>
+                <input type="range" id="slider1" min="1" max="6" value="1" step="1">
+            </div>
+        </div>
+
+        <!-- Blender (Center) -->
+        <div class="flex flex-col items-center w-full md:w-1/3 z-20">
+            <div id="blender-container" class="glass-panel p-6 rounded-[40px] rounded-t-lg border-4 border-white/20 shadow-2xl relative flex flex-col justify-end items-center h-[300px] w-[220px] transition-all duration-300">
+                <div class="absolute top-2 text-gray-400 text-sm font-bold tracking-widest">โถปั่นอวกาศ</div>
+                
+                <!-- Blender Liquid (Hidden initially) -->
+                <div id="blender-liquid" class="w-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-b-[32px] transition-all duration-1000 ease-in-out h-0 opacity-0"></div>
+                
+                <!-- Measurement Grid lines for blender (Static matching LCM) -->
+                <div class="absolute inset-x-6 top-10 bottom-6 flex flex-col justify-between z-10 pointer-events-none opacity-20" id="blender-grid">
+                    <!-- Lines injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Cup 2: Blueberry -->
+        <div class="flex flex-col items-center gap-4 w-full md:w-1/3">
+            <div class="glass-panel p-4 rounded-3xl flex flex-col items-center relative">
+                <div class="absolute -top-4 bg-blueberry text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
+                    บลูเบอร์รี
+                </div>
+                <!-- Canvas for Cup 2 -->
+                <canvas id="cup2-canvas" width="160" height="240" class="mt-2"></canvas>
+            </div>
+            <!-- Magic Slider 2 -->
+            <div class="w-full max-w-[200px] bg-space-800/80 p-3 rounded-xl border border-white/10 text-center">
+                <label class="block text-sm text-gray-300 mb-1">✨ Magic Slider (x<span id="mult2-display">1</span>)</label>
+                <input type="range" id="slider2" min="1" max="6" value="1" step="1">
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer / Action Area -->
+    <footer class="w-full p-6 flex justify-center items-center gap-4 z-10">
+        <button id="btn-reset" class="px-6 py-3 rounded-full bg-space-800 hover:bg-space-700 border border-white/20 text-white font-semibold transition-colors">
+            🔄 เริ่มใหม่
+        </button>
+        <button id="btn-blend" class="px-10 py-4 rounded-full bg-gray-600 text-gray-300 font-bold text-xl cursor-not-allowed transition-all transform shadow-lg" disabled>
+            🌪️ ผสมสมูทตี้! (เทไม่ได้)
+        </button>
+    </footer>
+
+    <script>
+        // State Management
+        const state = {
+            cup1: { baseN: 1, baseD: 2, mult: 1, color: '#fb7185' }, // Strawberry 1/2
+            cup2: { baseN: 1, baseD: 3, mult: 1, color: '#818cf8' }, // Blueberry 1/3
+            isMatched: false,
+            isBlended: false,
+            level: 1
+        };
+
+        // DOM Elements
+        const canvas1 = document.getElementById('cup1-canvas');
+        const ctx1 = canvas1.getContext('2d');
+        const canvas2 = document.getElementById('cup2-canvas');
+        const ctx2 = canvas2.getContext('2d');
+        
+        const slider1 = document.getElementById('slider1');
+        const slider2 = document.getElementById('slider2');
+        const mult1Disp = document.getElementById('mult1-display');
+        const mult2Disp = document.getElementById('mult2-display');
+        
+        const eqNum1 = document.getElementById('eq-num1');
+        const eqDen1 = document.getElementById('eq-den1');
+        const eqNum2 = document.getElementById('eq-num2');
+        const eqDen2 = document.getElementById('eq-den2');
+        const eqResult = document.getElementById('eq-result');
+        const eqNumRes = document.getElementById('eq-num-res');
+        const eqDenRes = document.getElementById('eq-den-res');
+        
+        const btnBlend = document.getElementById('btn-blend');
+        const btnReset = document.getElementById('btn-reset');
+        const mascot = document.getElementById('mascot');
+        const hintText = document.getElementById('hint-text');
+        
+        const orderTitle = document.getElementById('order-title');
+        const orderFruit1 = document.getElementById('order-fruit1');
+        const orderFruit2 = document.getElementById('order-fruit2');
+
+        const blenderContainer = document.getElementById('blender-container');
+        const blenderLiquid = document.getElementById('blender-liquid');
+        const blenderGrid = document.getElementById('blender-grid');
+
+        function drawCup(ctx, width, height, cupInfo, isMatched) {
+            ctx.clearRect(0, 0, width, height);
+            
+            const padding = 10;
+            const cupW = width - (padding * 2);
+            const cupH = height - (padding * 2);
+            const startX = padding;
+            const startY = padding;
+            
+            // 1. Draw Liquid (Height is always conserved based on base fraction!)
+            // This represents the "Concrete" concept of volume conservation.
+            const totalVolumeRatio = cupInfo.baseN / cupInfo.baseD;
+            const liquidH = cupH * totalVolumeRatio;
+            const liquidY = startY + cupH - liquidH;
+            
+            ctx.fillStyle = cupInfo.color;
+            // Draw liquid with slightly rounded bottom
+            ctx.beginPath();
+            ctx.moveTo(startX, liquidY);
+            ctx.lineTo(startX + cupW, liquidY);
+            ctx.lineTo(startX + cupW, startY + cupH - 10);
+            ctx.quadraticCurveTo(startX + cupW, startY + cupH, startX + cupW - 10, startY + cupH);
+            ctx.lineTo(startX + 10, startY + cupH);
+            ctx.quadraticCurveTo(startX, startY + cupH, startX, startY + cupH - 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // Highlight liquid top edge
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(startX, liquidY, cupW, 5);
+
+            // 2. Draw Cup Outline
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + cupH - 10);
+            ctx.quadraticCurveTo(startX, startY + cupH, startX + 10, startY + cupH);
+            ctx.lineTo(startX + cupW - 10, startY + cupH);
+            ctx.quadraticCurveTo(startX + cupW, startY + cupH, startX + cupW, startY + cupH - 10);
+            ctx.lineTo(startX + cupW, startY);
+            ctx.stroke();
+
+            // 3. Draw Grid Lines (Magic Slider logic)
+            // The number of slices changes, but the liquid height above remains the same!
+            const currentDenominator = cupInfo.baseD * cupInfo.mult;
+            const sliceHeight = cupH / currentDenominator;
+            
+            ctx.lineWidth = 2;
+            for (let i = 1; i < currentDenominator; i++) {
+                const lineY = startY + (sliceHeight * i);
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, lineY);
+                ctx.lineTo(startX + cupW, lineY);
+                
+                if (isMatched) {
+                    ctx.strokeStyle = '#fbbf24'; // Glowing yellow if matched
+                    ctx.shadowColor = '#fbbf24';
+                    ctx.shadowBlur = 10;
+                } else {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.shadowBlur = 0;
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0; // reset
+            }
+        }
+
+        function updateUI() {
+            if(state.isBlended) return; // Lock UI if blended
+
+            const currentD1 = state.cup1.baseD * state.cup1.mult;
+            const currentN1 = state.cup1.baseN * state.cup1.mult;
+            const currentD2 = state.cup2.baseD * state.cup2.mult;
+            const currentN2 = state.cup2.baseN * state.cup2.mult;
+
+            // Check if denominators match
+            state.isMatched = (currentD1 === currentD2);
+
+            // Draw Canvases
+            drawCup(ctx1, canvas1.width, canvas1.height, state.cup1, state.isMatched);
+            drawCup(ctx2, canvas2.width, canvas2.height, state.cup2, state.isMatched);
+
+            // Update Equation Text
+            eqNum1.innerText = currentN1;
+            eqDen1.innerText = currentD1;
+            eqNum2.innerText = currentN2;
+            eqDen2.innerText = currentD2;
+
+            // Update Button and Mascot State
+            if (state.isMatched) {
+                btnBlend.disabled = false;
+                btnBlend.className = "px-10 py-4 rounded-full bg-gradient-to-r from-mango to-orange-500 text-space-900 font-extrabold text-xl md:text-2xl cursor-pointer hover:scale-105 transition-all transform shadow-[0_0_20px_rgba(251,191,36,0.6)] animate-pulse";
+                btnBlend.innerHTML = "🌪️ ปั่นสมูทตี้เลย!";
+                
+                showMascot("เก่งมาก! ขีดตวงเท่ากันแล้ว เทรวมกันได้เลย! 🎉", "bg-green-400");
+                blenderContainer.classList.add('animate-glow');
+            } else {
+                btnBlend.disabled = true;
+                btnBlend.className = "px-10 py-4 rounded-full bg-gray-600/50 text-gray-400 font-bold text-xl cursor-not-allowed transition-all border border-gray-500";
+                btnBlend.innerHTML = "🌪️ ผสมสมูทตี้! (ยังเทไม่ได้)";
+                
+                blenderContainer.classList.remove('animate-glow');
+                hideMascot();
+            }
+        }
+
+        function showMascot(text, bgColorClass = "bg-mango") {
+            hintText.innerText = text;
+            mascot.className = `absolute -top-12 -left-4 md:-left-12 text-space-900 font-bold px-4 py-2 rounded-2xl rounded-bl-none shadow-lg transform transition-all duration-300 opacity-100 scale-100 z-50 ${bgColorClass}`;
+        }
+
+        function hideMascot() {
+            mascot.classList.replace('opacity-100', 'opacity-0');
+            mascot.classList.replace('scale-100', 'scale-90');
+        }
+
+        slider1.addEventListener('input', (e) => {
+            state.cup1.mult = parseInt(e.target.value);
+            mult1Disp.innerText = state.cup1.mult;
+            updateUI();
+        });
+
+        slider2.addEventListener('input', (e) => {
+            state.cup2.mult = parseInt(e.target.value);
+            mult2Disp.innerText = state.cup2.mult;
+            updateUI();
+        });
+
+        btnBlend.addEventListener('click', () => {
+            if(!state.isMatched) return;
+            
+            // หากปั่นเสร็จแล้ว และกดปุ่มอีกครั้ง จะเป็นการไปเลเวลถัดไป
+            if(state.isBlended) {
+                generateNewOrder();
+                return;
+            }
+
+            state.isBlended = true;
+            
+            // Animation for blending
+            const currentD = state.cup1.baseD * state.cup1.mult;
+            const totalN = (state.cup1.baseN * state.cup1.mult) + (state.cup2.baseN * state.cup2.mult);
+            
+            // Empty cups visually
+            ctx1.clearRect(0,0, canvas1.width, canvas1.height);
+            ctx2.clearRect(0,0, canvas2.width, canvas2.height);
+            drawCup(ctx1, canvas1.width, canvas1.height, {...state.cup1, baseN: 0}, false);
+            drawCup(ctx2, canvas2.width, canvas2.height, {...state.cup2, baseN: 0}, false);
+
+            // Fill Blender
+            const fillPercentage = Math.min((totalN / currentD) * 100, 100);
+            blenderLiquid.style.opacity = '1';
+            blenderLiquid.style.height = `${fillPercentage}%`;
+            
+            // Draw grid on blender dynamically
+            blenderGrid.innerHTML = '';
+            for(let i = 1; i < currentD; i++) {
+                const line = document.createElement('div');
+                line.className = 'w-full h-px bg-white opacity-50';
+                blenderGrid.appendChild(line);
+            }
+
+            // Show Result on Board
+            eqResult.classList.remove('opacity-30');
+            eqResult.classList.add('opacity-100', 'text-green-400', 'scale-110');
+            eqNumRes.innerText = totalN;
+            eqDenRes.innerText = currentD;
+
+            showMascot(`Perfect! รวมกันได้ ${totalN}/${currentD} โถ! 🚀`, "bg-green-400");
+            
+            // เปลี่ยนปุ่มเป็นด่านถัดไป
+            btnBlend.innerHTML = "➡️ รับออเดอร์ถัดไป";
+            btnBlend.disabled = false;
+            btnBlend.className = "px-10 py-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 text-white font-extrabold text-xl md:text-2xl cursor-pointer hover:scale-105 transition-all transform shadow-[0_0_20px_rgba(52,211,153,0.6)]";
+        });
+
+        // ฟังก์ชันสำหรับสร้างโจทย์ใหม่แบบสุ่ม
+        function generateNewOrder() {
+            state.level++;
+            
+            // สุ่มตัวส่วน (2 ถึง 6) โดยให้ไม่ซ้ำกัน
+            const d1 = Math.floor(Math.random() * 5) + 2;
+            let d2 = Math.floor(Math.random() * 5) + 2;
+            while(d2 === d1) {
+                d2 = Math.floor(Math.random() * 5) + 2;
+            }
+            
+            // สุ่มตัวเศษ (ให้น้อยกว่าตัวส่วนเสมอ)
+            const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+            const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+            
+            state.cup1 = { baseN: n1, baseD: d1, mult: 1, color: '#fb7185' };
+            state.cup2 = { baseN: n2, baseD: d2, mult: 1, color: '#818cf8' };
+            state.isBlended = false;
+            
+            // Reset Slider & Board
+            slider1.value = 1;
+            slider2.value = 1;
+            mult1Disp.innerText = 1;
+            mult2Disp.innerText = 1;
+            
+            blenderLiquid.style.height = '0';
+            blenderLiquid.style.opacity = '0';
+            blenderGrid.innerHTML = '';
+            
+            eqResult.classList.add('opacity-30');
+            eqResult.classList.remove('opacity-100', 'text-green-400', 'scale-110');
+            eqNumRes.innerText = '?';
+            eqDenRes.innerText = '?';
+            
+            // Update Text UI
+            orderTitle.innerText = `👽 ออเดอร์ที่ ${state.level} จากเอเลี่ยน:`;
+            orderFruit1.innerText = `สตรอว์เบอร์รี ${n1}/${d1}`;
+            orderFruit2.innerText = `บลูเบอร์รี ${n2}/${d2}`;
+            
+            updateUI(); // วาดทุกอย่างใหม่
+        }
+
+        btnReset.addEventListener('click', () => {
+            state.cup1.mult = 1;
+            state.cup2.mult = 1;
+            state.isBlended = false;
+            slider1.value = 1;
+            slider2.value = 1;
+            mult1Disp.innerText = 1;
+            mult2Disp.innerText = 1;
+            
+            blenderLiquid.style.height = '0';
+            blenderLiquid.style.opacity = '0';
+            blenderGrid.innerHTML = '';
+            
+            eqResult.classList.add('opacity-30');
+            eqResult.classList.remove('opacity-100', 'text-green-400', 'scale-110');
+            eqNumRes.innerText = '?';
+            eqDenRes.innerText = '?';
+            
+            btnBlend.innerHTML = "🌪️ ผสมสมูทตี้! (ยังเทไม่ได้)";
+            
+            updateUI();
+        });
+
+        // Initialize App
+        updateUI();
+
+    </script>
+</body>
+</html>
